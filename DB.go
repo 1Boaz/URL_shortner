@@ -7,8 +7,15 @@ import (
 
 type Urls struct {
 	gorm.Model
-	Shortend string `gorm:"uniqueIndex"`
-	Long     string
+	Shortend  string `gorm:"uniqueIndex"`
+	Long      string
+	CreatorID int
+}
+
+type Users struct {
+	gorm.Model
+	Username string `gorm:"uniqueIndex"`
+	Password string
 }
 
 type Server struct {
@@ -23,6 +30,10 @@ func DBinit() *gorm.DB {
 
 	// Migrate the schema
 	err = db.AutoMigrate(&Urls{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+	err = db.AutoMigrate(&Users{})
 	if err != nil {
 		panic("failed to connect database")
 	}
