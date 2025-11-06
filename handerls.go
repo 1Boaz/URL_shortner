@@ -18,7 +18,7 @@ func (s *Server) New(context *gin.Context) {
 
 	urls.Shortend = strings.TrimSpace(urls.Shortend)
 	urls.Long = strings.TrimSpace(urls.Long)
-	if !strings.HasPrefix(urls.Long, "http://") || !strings.HasPrefix(urls.Long, "https://") {
+	if !strings.HasPrefix(urls.Long, "http://") && !strings.HasPrefix(urls.Long, "https://") && !strings.HasPrefix(urls.Long, "//") {
 		urls.Long = "//" + urls.Long
 	}
 
@@ -35,11 +35,37 @@ func (s *Server) New(context *gin.Context) {
 	}
 }
 
+func (s *Server) Remove(context *gin.Context) {
+	urls := Urls{}
+
+	if err := context.ShouldBindJSON(&urls); err != nil {
+		context.JSON(400, gin.H{"error": err.Error()})
+		slog.Error(err.Error())
+		return
+	}
+
+	urls.Shortend = strings.TrimSpace(urls.Shortend)
+
+	result := s.db.Delete(&urls, "shortend = ?", urls.Shortend)
+
+	if result.Error != nil {
+		context.JSON(400, gin.H{"error": result.Error.Error()})
+		slog.Warn(result.Error.Error())
+		return
+	} else if result.RowsAffected == 0 {
+		context.JSON(400, gin.H{"error": "Shortend URL does not exist in the database"})
+		slog.Warn("Shortend URL does not exist in the database")
+		return
+	}
+
+	context.JSON(200, gin.H{"message": "Shortend URL deleted successfully"})
+}
+
 func (s *Server) Get(context *gin.Context) {
-	Shortend := context.Param("Shortend")
+	Shortend := context.Param("Shortened")
 	url := Urls{}
 
-	result := s.db.Where("Shortend", Shortend).First(&url)
+	result := s.db.Raw("SELECT Long from urls WHERE Shortend = ?", Shortend).Scan(&url)
 
 	if result.Error != nil {
 		context.JSON(400, gin.H{"error": result.Error.Error()})

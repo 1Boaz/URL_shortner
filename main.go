@@ -1,13 +1,13 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	log.Println("Starting")
+	slog.Info("Starting")
 	router := gin.New()
 	db := DBinit()
 
@@ -16,7 +16,8 @@ func main() {
 	}
 
 	router.POST("/create", server.New)
-	router.GET("/:Shortend", server.Get)
+	router.POST("/remove", server.Remove)
+	router.GET("/:Shortened", server.Get)
 
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
